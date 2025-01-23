@@ -1,41 +1,20 @@
 const axios = require("axios");
 const { Solver } = require("@2captcha/captcha-solver");
-const { google } = require("googleapis");
+const { simpleParser } = require("mailparser");
 const { logMessage } = require("../utils/logger");
 const { getProxyAgent } = require("./proxy");
+const { authorize } = require("./authGmail");
 const fs = require("fs");
 const { EmailGenerator } = require("../utils/generator");
 const path = require("path");
-const TOKEN_PATH = path.join(__dirname, "../json/token.json");
-const confEmail = JSON.parse(
-  fs.readFileSync(path.resolve(__dirname, "../json/client_secret.json"))
-).email;
-const confApi = JSON.parse(
-  fs.readFileSync(path.resolve(__dirname, "../json/client_secret.json"))
-).geminiApi;
-const gemeiniPrompt = JSON.parse(
-  fs.readFileSync(path.resolve(__dirname, "../json/client_secret.json"))
-).prompt;
-const captchaApi = JSON.parse(
-  fs.readFileSync(path.resolve(__dirname, "../json/client_secret.json"))
-).captha2Apikey;
+const configPath = path.resolve(__dirname, "../json/config.json");
+const config = JSON.parse(fs.readFileSync(configPath));
+const confEmail = config.email;
+const confApi = config.geminiApi;
+const gemeiniPrompt = config.prompt;
+const captchaApi = config.captha2Apikey;
 const qs = require("qs");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
-
-function loadOAuth2Client() {
-  const credentials = JSON.parse(
-    fs.readFileSync(path.resolve(__dirname, "../json/client_secret.json"))
-  );
-  const { client_id, client_secret, redirect_uris } = credentials.installed;
-  const oAuth2Client = new google.auth.OAuth2(
-    client_id,
-    client_secret,
-    redirect_uris[0]
-  );
-  const token = JSON.parse(fs.readFileSync(TOKEN_PATH));
-  oAuth2Client.setCredentials(token);
-  return oAuth2Client;
-}
 
 class ariChain {
   constructor(refCode, proxy = null) {
@@ -45,10 +24,6 @@ class ariChain {
       ...(this.proxy && { httpsAgent: getProxyAgent(this.proxy) }),
       timeout: 60000,
     };
-    this.gmailClient = google.gmail({
-      version: "v1",
-      auth: loadOAuth2Client(),
-    });
     this.baseEmail = confEmail;
     this.gemini = new GoogleGenerativeAI(confApi);
     this.model = this.gemini.getGenerativeModel({
@@ -221,7 +196,6 @@ class ariChain {
         );
         continue;
       }
-
       if (use2Captcha) {
         captchaText = await this.solveCaptchaWith2Captcha(captchaImageBuffer);
       } else {
@@ -305,7 +279,7 @@ class ariChain {
       "Waiting for code verification...",
       "process"
     );
-
+    const client = await authorize();
     const maxAttempts = 5;
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       logMessage(
@@ -323,37 +297,44 @@ class ariChain {
       );
       await new Promise((resolve) => setTimeout(resolve, 10000));
 
-      const messages = await this.gmailClient.users.messages.list({
-        userId: "me",
-        q: `to:${tempEmail}`,
-      });
+      try {
+        const lock = await client.getMailboxLock("INBOX");
+        try {
+          const messages = await client.fetch("1:*", {
+            envelope: true,
+            source: true,
+          });
 
-      if (messages.data.messages && messages.data.messages.length > 0) {
-        const messageId = messages.data.messages[0].id;
-        const message = await this.gmailClient.users.messages.get({
-          userId: "me",
-          id: messageId,
-          format: "full",
-        });
-
-        const emailBody = message.data.payload.body.data;
-        if (emailBody) {
-          const decodedBody = Buffer.from(emailBody, "base64").toString(
-            "utf-8"
-          );
-
-          const codeMatch = decodedBody.match(/\b\d{6}\b/);
-          if (codeMatch) {
-            const verificationCode = codeMatch[0];
-            logMessage(
-              this.currentNum,
-              this.total,
-              `Verificatin code found: ${verificationCode}`,
-              "success"
-            );
-            return verificationCode;
+          for await (const message of messages) {
+            if (message.envelope.to.some((to) => to.address === tempEmail)) {
+              const emailSource = message.source.toString();
+              const parsedEmail = await simpleParser(emailSource);
+              const verificationCode = this.extractVerificationCode(
+                parsedEmail.html
+              );
+              if (verificationCode) {
+                logMessage(
+                  this.currentNum,
+                  this.total,
+                  `Verification code found: ${verificationCode}`,
+                  "success"
+                );
+                return verificationCode;
+              } else {
+                logMessage(
+                  this.currentNum,
+                  this.total,
+                  "No verification code found in the email body.",
+                  "warning"
+                );
+              }
+            }
           }
+        } finally {
+          lock.release();
         }
+      } catch (error) {
+        console.error("Error fetching emails:", error);
       }
 
       logMessage(
@@ -371,6 +352,16 @@ class ariChain {
       "Error get code verification.",
       "error"
     );
+    return null;
+  }
+
+  extractVerificationCode(html) {
+    if (!html) return null;
+    const codeMatch = html.match(/\b\d{6}\b/);
+    if (codeMatch) {
+      return codeMatch[0];
+    }
+
     return null;
   }
 

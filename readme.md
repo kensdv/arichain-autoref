@@ -11,9 +11,10 @@ This bot automates the process of creating accounts and using referral codes for
 
 ## Requirements
 
-- Node.js 18 v18.20.5 LTS or latest.
+- Node.js v18.20.5 LTS or latest.
 - npm (Node Package Manager)
 - Use 2Captcha Services [2Captcha](https://2captcha.com/), free version you can using gemini apikey.
+- email and password gmail
 
 ## Installation
 
@@ -32,35 +33,21 @@ This bot automates the process of creating accounts and using referral codes for
 
 3. Create a `proxy.txt` file in the root directory and add your proxies (one per line).
 
-4. change `client_secret.json.example` to `client_secret.json`.
+4. change `config.json.example` to `config.json`
 
-5. Set up Gmail API credentials:
+5. change your email, password (for get password you can see this video [Here](https://youtu.be/zc4G9OkVP68?si=PX2FdrUjJhWh4RUE)), gemini apikey [Here](https://aistudio.google.com/app/apikey),
 
-   - Go to the [Google Cloud Console](https://console.developers.google.com/).
-   - Create a new project.
-   - Enable the Gmail API for the project.
-   - Create OAuth 2.0 credentials for a native application.
-   - Download the `client_secret.json` open it and copy paste to `src/json/client_secret.json`.
-   - Don't forget to change the email referral verification in `client_secret.json`.
-   - Change gemini apikey in `client_secret.json`.
-
-6. If you want using 2 Captcha service you can fill your apikey in `client_secret.json` and change `"captha2Apikey": "your_2captcha_apikey",` with your apikey.
-
-Get gemini apikey : [Here](https://aistudio.google.com/app/apikey)
-
-Tutorial video, how to get api credentials : [Here](https://t.me/elpuqus/138)
+6. If you want using 2 Captcha service you can fill your apikey in `config.json` and change `"captha2Apikey": "your_2captcha_apikey",` with your apikey.
 
 ## Usage
 
 1. Run the bot:
 
    ```sh
-   node main.js
+   node .
    ```
 
 2. Follow the prompts to enter your referral code, address to transfer token and the number of accounts you want to create, and dont forget too choice your solve captcha too.
-
-3. If this is your first time running the bot, you will be prompted to authorize the application to access your Gmail account. Follow the instructions to complete the authorization.
 
 ## Output
 
