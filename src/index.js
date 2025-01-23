@@ -17,10 +17,14 @@ async function main() {
   `)
   );
 
-  const use2CaptchaResponse = await prompt(
-    chalk.yellow("Use 2Captcha ? (y/n): ")
+  const captchaSolverResponse = await prompt(
+    chalk.yellow(
+      "Choose CAPTCHA solver (1 for 2Captcha, 2 for Anti-Captcha, 3 for Gemini): "
+    )
   );
-  const use2Captcha = use2CaptchaResponse.toLowerCase() === "y";
+  const use2Captcha = captchaSolverResponse === "1";
+  const useAntiCaptcha = captchaSolverResponse === "2";
+  const useGemini = captchaSolverResponse === "3";
   const refCode = await prompt(chalk.yellow("Enter Referral Code: "));
   const toAddress = await prompt(
     chalk.yellow("Enter target address for token transfer: ")
@@ -45,7 +49,11 @@ async function main() {
       const email = generator.generateTempEmail();
       const password = generateRandomPassword();
 
-      const emailSent = await generator.sendEmailCode(email, use2Captcha);
+      const emailSent = await generator.sendEmailCode(
+        email,
+        use2Captcha,
+        useAntiCaptcha
+      );
       if (!emailSent) continue;
 
       const account = await generator.registerAccount(email, password);

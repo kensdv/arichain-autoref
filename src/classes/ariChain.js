@@ -1,5 +1,6 @@
 const axios = require("axios");
 const { Solver } = require("@2captcha/captcha-solver");
+const ac = require("@antiadmin/anticaptchaofficial");
 const { simpleParser } = require("mailparser");
 const { logMessage } = require("../utils/logger");
 const { getProxyAgent } = require("./proxy");
@@ -13,6 +14,8 @@ const confEmail = config.email;
 const confApi = config.geminiApi;
 const gemeiniPrompt = config.prompt;
 const captchaApi = config.captha2Apikey;
+const apiCaptcha = config.apiCaptchakey;
+ac.setAPIKey(apiCaptcha);
 const qs = require("qs");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
@@ -146,7 +149,18 @@ class ariChain {
     }
   }
 
-  async sendEmailCode(email, use2Captcha = false) {
+  async solveCaptchaWithAntiCaptcha(imageBuffer) {
+    try {
+      const base64Image = Buffer.from(imageBuffer).toString("base64");
+      const captchaText = await ac.solveImage(base64Image, true);
+      return captchaText;
+    } catch (error) {
+      console.error("Error solving CAPTCHA with Anti-Captcha:", error);
+      return null;
+    }
+  }
+
+  async sendEmailCode(email, use2Captcha = false, useAntiCaptcha = false) {
     logMessage(
       this.currentNum,
       this.total,
@@ -196,8 +210,13 @@ class ariChain {
         );
         continue;
       }
+
       if (use2Captcha) {
         captchaText = await this.solveCaptchaWith2Captcha(captchaImageBuffer);
+      } else if (useAntiCaptcha) {
+        captchaText = await this.solveCaptchaWithAntiCaptcha(
+          captchaImageBuffer
+        );
       } else {
         captchaText = await this.solveCaptchaWithGemini(captchaImageBuffer);
       }
