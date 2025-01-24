@@ -13,8 +13,9 @@ This bot automates the process of creating accounts and using referral codes for
 
 - Node.js v18.20.5 LTS or latest.
 - npm (Node Package Manager)
-- Use 2Captcha Services [2Captcha](https://2captcha.com/), free version you can using gemini apikey.
-- email and password gmail
+- Use 2Captcha Services [2Captcha](https://2captcha.com/), [AntiCaptcha](https://anti-captcha.com/), free version you can using gemini apikey.
+- email and password gmail (for password not your email password, use app password)
+- completely how to use it [here](https://youtu.be/_rAoQeKpEtM?si=SLicWKn-AurwE8oa).
 
 ## Installation
 
@@ -35,7 +36,7 @@ This bot automates the process of creating accounts and using referral codes for
 
 4. change `config.json.example` to `config.json`
 
-5. change your email, password (for get password you can see this video [Here](https://youtu.be/zc4G9OkVP68?si=PX2FdrUjJhWh4RUE)), gemini apikey [Here](https://aistudio.google.com/app/apikey),
+5. change your email, password (for get password you can see this video [Here](https://youtu.be/_rAoQeKpEtM?si=SLicWKn-AurwE8oa)), gemini apikey [Here](https://aistudio.google.com/app/apikey),
 
 6. If you want using 2 Captcha service you can fill your apikey in `config.json` and change `"captha2Apikey": "your_2captcha_apikey",` with your apikey.
 
@@ -55,7 +56,6 @@ This bot automates the process of creating accounts and using referral codes for
 
 ## Notes
 
-- If you get error `invalid creds` you can delete token in `src/json/token.json`
 - Make sure to use valid proxies to avoid IP bans.
 - The bot will attempt to verify the email up to 5 times before giving up.
 
