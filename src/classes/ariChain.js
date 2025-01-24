@@ -121,19 +121,17 @@ class ariChain {
       const captchaText = result.response.text().trim();
       const cleanedCaptchaText = captchaText.replace(/\s/g, "");
 
-      logMessage(
-        this.currentNum,
-        this.total,
-        "Solve captcha done...",
-        "success"
-      );
       return cleanedCaptchaText;
     } catch (error) {
-      console.error("Error solving CAPTCHA with Gemini:", error);
+      if (error.message.includes("quota") || error.message.includes("limit")) {
+        throw new Error(
+          "Your gemini API key has reached the limit. Please wait for the quota to reset."
+        );
+      }
+
       return null;
     }
   }
-
   async solveCaptchaWith2Captcha(imageBuffer) {
     try {
       const base64Image = Buffer.from(imageBuffer).toString("base64");
@@ -272,6 +270,13 @@ class ariChain {
           return false;
         }
       }
+
+      logMessage(
+        this.currentNum,
+        this.total,
+        "Solve captcha done...",
+        "success"
+      );
 
       logMessage(
         this.currentNum,

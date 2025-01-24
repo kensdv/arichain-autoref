@@ -38,76 +38,92 @@ async function main() {
 
   const accountAri = fs.createWriteStream("accounts.txt", { flags: "a" });
 
-  for (let i = 0; i < count; i++) {
-    console.log(chalk.white("-".repeat(85)));
-    logMessage(i + 1, count, "Process", "debug");
+  try {
+    for (let i = 0; i < count; i++) {
+      console.log(chalk.white("-".repeat(85)));
+      logMessage(i + 1, count, "Process", "debug");
 
-    const currentProxy = await getRandomProxy();
-    const generator = new ariChain(refCode, currentProxy);
+      const currentProxy = await getRandomProxy();
+      const generator = new ariChain(refCode, currentProxy);
 
-    try {
-      const email = generator.generateTempEmail();
-      const password = generateRandomPassword();
+      try {
+        const email = generator.generateTempEmail();
+        const password = generateRandomPassword();
 
-      const emailSent = await generator.sendEmailCode(
-        email,
-        use2Captcha,
-        useAntiCaptcha
-      );
-      if (!emailSent) continue;
+        const emailSent = await generator.sendEmailCode(
+          email,
+          use2Captcha,
+          useAntiCaptcha
+        );
+        if (!emailSent) continue;
 
-      const account = await generator.registerAccount(email, password);
+        const account = await generator.registerAccount(email, password);
 
-      if (account) {
-        accountAri.write(`Email: ${email}\n`);
-        accountAri.write(`Password: ${password}\n`);
-        accountAri.write(`Reff To: ${refCode}\n`);
-        accountAri.write("-".repeat(85) + "\n");
+        if (account) {
+          accountAri.write(`Email: ${email}\n`);
+          accountAri.write(`Password: ${password}\n`);
+          accountAri.write(`Reff To: ${refCode}\n`);
+          accountAri.write("-".repeat(85) + "\n");
 
-        successful++;
-        logMessage(i + 1, count, "Account Success Create!", "success");
-        logMessage(i + 1, count, `Email: ${email}`, "success");
-        logMessage(i + 1, count, `Password: ${password}`, "success");
-        logMessage(i + 1, count, `Reff To : ${refCode}`, "success");
+          successful++;
+          logMessage(i + 1, count, "Account Success Create!", "success");
+          logMessage(i + 1, count, `Email: ${email}`, "success");
+          logMessage(i + 1, count, `Password: ${password}`, "success");
+          logMessage(i + 1, count, `Reff To : ${refCode}`, "success");
 
-        const address = account.result.address;
-        try {
-          const checkinResult = await generator.checkinDaily(address);
-          logMessage(i + 1, count, `Checkin Daily Done`, "success");
-          if (!checkinResult) {
-            throw new Error("Gagal checkin");
+          const address = account.result.address;
+          try {
+            const checkinResult = await generator.checkinDaily(address);
+            logMessage(i + 1, count, `Checkin Daily Done`, "success");
+            if (!checkinResult) {
+              throw new Error("Gagal checkin");
+            }
+            const transferResult = await generator.transferToken(
+              email,
+              toAddress,
+              password,
+              60
+            );
+            if (!transferResult) {
+              throw new Error("Gagal transfer token");
+            }
+            logMessage(i + 1, count, `Transfer Token Done`, "success");
+          } catch (error) {
+            logMessage(i + 1, count, error.message, "error");
+            continue;
           }
-          const transferResult = await generator.transferToken(
-            email,
-            toAddress,
-            password,
-            60
-          );
-          if (!transferResult) {
-            throw new Error("Gagal transfer token");
+        } else {
+          logMessage(i + 1, count, "Register Account Failed", "error");
+          if (generator.proxy) {
+            logMessage(
+              i + 1,
+              count,
+              `Failed proxy: ${generator.proxy}`,
+              "error"
+            );
           }
-          logMessage(i + 1, count, `Transfer Token Done`, "success");
-        } catch (error) {
-          logMessage(i + 1, count, error.message, "error");
-          continue;
         }
-      } else {
-        logMessage(i + 1, count, "Register Account Failed", "error");
-        if (generator.proxy) {
-          logMessage(i + 1, count, `Failed proxy: ${generator.proxy}`, "error");
+      } catch (error) {
+        if (
+          error.message ===
+          "Your gemini API key has reached the limit. Please wait for the quota to reset."
+        ) {
+          console.log(chalk.red(error.message));
+          break;
         }
+        logMessage(i + 1, count, `Error: ${error.message}`, "error");
       }
-    } catch (error) {
-      logMessage(i + 1, count, `Error: ${error.message}`, "error");
     }
+  } finally {
+    accountAri.end();
+
+    console.log(chalk.magenta("\n[*] Dono bang!"));
+    console.log(
+      chalk.green(`[*] Account dono ${successful} dari ${count} akun`)
+    );
+    console.log(chalk.magenta("[*] Result in accounts.txt"));
+    rl.close();
   }
-
-  accountAri.end();
-
-  console.log(chalk.magenta("\n[*] Dono bang!"));
-  console.log(chalk.green(`[*] Account dono ${successful} dari ${count} akun`));
-  console.log(chalk.magenta("[*] Result in accounts.txt"));
-  rl.close();
 }
 
 module.exports = { main };
