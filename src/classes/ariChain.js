@@ -330,7 +330,10 @@ class ariChain {
           });
 
           for await (const message of messages) {
-            if (message.envelope.to.some((to) => to.address === tempEmail)) {
+            if (
+              message.envelope.to &&
+              message.envelope.to.some((to) => to.address === email)
+            ) {
               const emailSource = message.source.toString();
               const parsedEmail = await simpleParser(emailSource);
               const verificationCode = this.extractVerificationCode(

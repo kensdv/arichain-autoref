@@ -19,7 +19,7 @@ async function main() {
 
   const captchaSolverResponse = await prompt(
     chalk.yellow(
-      "Choose CAPTCHA solver (1 for 2Captcha, 2 for Anti-Captcha, 3 for Gemini): "
+      `Choose CAPTCHA solver : \n1.2Captcha\n2.Anti-Captcha\n3.Gemini\n: `
     )
   );
   const use2Captcha = captchaSolverResponse === "1";
