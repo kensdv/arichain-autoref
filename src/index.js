@@ -36,6 +36,7 @@ async function main() {
 
   let successful = 0;
   const accountAri = fs.createWriteStream("accounts.txt", { flags: "a" });
+  const accountsbot = fs.createWriteStream("accountsbot.txt", { flags: "a" });
 
   try {
     for (let i = 0; i < count; i++) {
@@ -65,6 +66,7 @@ async function main() {
           accountAri.write(`Master Key : ${account.result.master_key}\n`);
           accountAri.write(`Invite Code : ${account.result.invite_code}\n`);
           accountAri.write(`Reff To: ${refCode}\n`);
+          accountsbot.write(`${email}:${account.result.address}\n`);
           accountAri.write("-".repeat(85) + "\n");
 
           successful++;
@@ -109,6 +111,7 @@ async function main() {
     }
   } finally {
     accountAri.end();
+    accountsbot.end();
 
     console.log(chalk.magenta("\n[*] Dono bang!"));
     console.log(
