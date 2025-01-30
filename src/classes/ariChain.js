@@ -432,10 +432,12 @@ class ariChain {
         data: transferData,
       }
     );
-    if (!response) {
-      logMessage(this.currentNum, this.total, "Failed send token", "error");
+
+    if (response.data.status === "fail") {
+      logMessage(this.currentNum, this.total, response.data.msg, "error");
       return null;
     }
+
     return response.data;
   }
 

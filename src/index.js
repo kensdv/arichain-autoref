@@ -60,8 +60,11 @@ async function main() {
         const account = await generator.registerAccount(email, password);
 
         if (account) {
-          accountAri.write(`Email: ${email}\n`);
-          accountAri.write(`Password: ${password}\n`);
+          accountAri.write(`Email : ${email}\n`);
+          accountAri.write(`Password : ${password}\n`);
+          accountAri.write(`Address : ${account.result.address}\n`);
+          accountAri.write(`Master Key : ${account.result.master_key}\n`);
+          accountAri.write(`Invite Code : ${account.result.invite_code}\n`);
           accountAri.write(`Reff To: ${refCode}\n`);
           accountAri.write("-".repeat(85) + "\n");
 
@@ -78,16 +81,16 @@ async function main() {
             if (!checkinResult) {
               throw new Error("Gagal checkin");
             }
-            const transferResult = await generator.transferToken(
-              email,
-              toAddress,
-              password,
-              60
-            );
-            if (!transferResult) {
-              throw new Error("Gagal transfer token");
-            }
-            logMessage(i + 1, count, `Transfer Token Done`, "success");
+            // const transferResult = await generator.transferToken(
+            //   email,
+            //   toAddress,
+            //   password,
+            //   60
+            // );
+            // if (!transferResult) {
+            //   throw new Error("Gagal transfer token");
+            // }
+            // logMessage(i + 1, count, `Transfer Token Done`, "success");
           } catch (error) {
             logMessage(i + 1, count, error.message, "error");
             continue;
