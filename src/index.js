@@ -1,8 +1,7 @@
 const { prompt, logMessage, rl } = require("./utils/logger");
 const ariChain = require("./classes/ariChain");
-const { generateRandomPassword } = require("./utils/generator");
+const { generatePassword } = require("./utils/generator");
 const { getRandomProxy, loadProxies } = require("./classes/proxy");
-
 const chalk = require("chalk");
 const fs = require("fs");
 
@@ -19,36 +18,36 @@ async function main() {
 
   const captchaSolverResponse = await prompt(
     chalk.yellow(
-      `Choose CAPTCHA solver : \n1.2Captcha\n2.Anti-Captcha\n3.Gemini\n: `
+      `Choose CAPTCHA solver : \n1.2Captcha\n2.Anti-Captcha\n3.Gemini\nEnter number: `
     )
   );
   const use2Captcha = captchaSolverResponse === "1";
   const useAntiCaptcha = captchaSolverResponse === "2";
   const useGemini = captchaSolverResponse === "3";
   const refCode = await prompt(chalk.yellow("Enter Referral Code: "));
-  const toAddress = await prompt(
-    chalk.yellow("Enter target address for token transfer: ")
-  );
+  // const toAddress = await prompt(
+  //   chalk.yellow("Enter target address for token transfer: ")
+  // );
   const count = parseInt(await prompt(chalk.yellow("How many do you want? ")));
   const proxiesLoaded = loadProxies();
   if (!proxiesLoaded) {
-    console.log(chalk.yellow("No proxy available. Using default IP."));
+    logMessage(null, null, "No Proxy. Using default IP", "warning");
   }
-  let successful = 0;
 
+  let successful = 0;
   const accountAri = fs.createWriteStream("accounts.txt", { flags: "a" });
 
   try {
     for (let i = 0; i < count; i++) {
       console.log(chalk.white("-".repeat(85)));
-      logMessage(i + 1, count, "Process", "debug");
+      logMessage(i + 1, count, "Processing register account", "process");
 
-      const currentProxy = await getRandomProxy();
-      const generator = new ariChain(refCode, currentProxy);
+      const currentProxy = await getRandomProxy(i + 1, count);
+      const generator = new ariChain(refCode, currentProxy, i + 1, count);
 
       try {
         const email = generator.generateTempEmail();
-        const password = generateRandomPassword();
+        const password = generatePassword();
 
         const emailSent = await generator.sendEmailCode(
           email,
@@ -69,7 +68,6 @@ async function main() {
           accountAri.write("-".repeat(85) + "\n");
 
           successful++;
-          logMessage(i + 1, count, "Account Success Create!", "success");
           logMessage(i + 1, count, `Email: ${email}`, "success");
           logMessage(i + 1, count, `Password: ${password}`, "success");
           logMessage(i + 1, count, `Reff To : ${refCode}`, "success");
@@ -79,7 +77,7 @@ async function main() {
             const checkinResult = await generator.checkinDaily(address);
             logMessage(i + 1, count, `Checkin Daily Done`, "success");
             if (!checkinResult) {
-              throw new Error("Gagal checkin");
+              throw new Error("Failed checkin daily");
             }
             // const transferResult = await generator.transferToken(
             //   email,
@@ -97,21 +95,13 @@ async function main() {
           }
         } else {
           logMessage(i + 1, count, "Register Account Failed", "error");
-          if (generator.proxy) {
-            logMessage(
-              i + 1,
-              count,
-              `Failed proxy: ${generator.proxy}`,
-              "error"
-            );
-          }
         }
       } catch (error) {
         if (
           error.message ===
           "Your gemini API key has reached the limit. Please wait for the quota to reset."
         ) {
-          console.log(chalk.red(error.message));
+          logMessage(i + 1, count, `${error.message}`, "error");
           break;
         }
         logMessage(i + 1, count, `Error: ${error.message}`, "error");

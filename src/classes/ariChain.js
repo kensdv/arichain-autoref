@@ -20,7 +20,7 @@ const qs = require("qs");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 class ariChain {
-  constructor(refCode, proxy = null) {
+  constructor(refCode, proxy = null, currentNum, total) {
     this.refCode = refCode;
     this.proxy = proxy;
     this.axiosConfig = {
@@ -33,6 +33,8 @@ class ariChain {
       model: "gemini-1.5-flash",
     });
     this.twoCaptchaSolver = new Solver(captchaApi);
+    this.currentNum = currentNum;
+    this.total = total;
   }
 
   async makeRequest(method, url, config = {}) {
@@ -51,14 +53,6 @@ class ariChain {
         `Request failed: ${error.message}`,
         "error"
       );
-      if (this.proxy) {
-        logMessage(
-          this.currentNum,
-          this.total,
-          `Failed proxy: ${this.proxy}`,
-          "error"
-        );
-      }
       return null;
     }
   }
@@ -177,7 +171,7 @@ class ariChain {
       logMessage(
         this.currentNum,
         this.total,
-        `Attempt ${attempts} to solve CAPTCHA...`,
+        `Attempt ${attempts} to solve captcha...`,
         "process"
       );
 
@@ -190,7 +184,7 @@ class ariChain {
         logMessage(
           this.currentNum,
           this.total,
-          "Failed to get CAPTCHA",
+          "Failed to get captcha",
           "error"
         );
         continue;
@@ -203,7 +197,7 @@ class ariChain {
         logMessage(
           this.currentNum,
           this.total,
-          "Failed to get CAPTCHA image",
+          "Failed to get captcha iamge",
           "error"
         );
         continue;
@@ -223,7 +217,7 @@ class ariChain {
         logMessage(
           this.currentNum,
           this.total,
-          "Failed to solve CAPTCHA",
+          "Failed to solve captcha",
           "error"
         );
         continue;
@@ -261,8 +255,8 @@ class ariChain {
           logMessage(
             this.currentNum,
             this.total,
-            "CAPTCHA is not valid, retrying...",
-            "warning"
+            "Captcha is not valid, retrying...",
+            "error"
           );
           continue;
         } else {
@@ -317,7 +311,7 @@ class ariChain {
         this.currentNum,
         this.total,
         "Waiting for 10sec...",
-        "warning"
+        "process"
       );
       await new Promise((resolve) => setTimeout(resolve, 10000));
 
@@ -352,7 +346,7 @@ class ariChain {
                   this.currentNum,
                   this.total,
                   "No verification code found in the email body.",
-                  "warning"
+                  "error"
                 );
               }
             }
@@ -368,7 +362,7 @@ class ariChain {
         this.currentNum,
         this.total,
         "Verification code not found. Waiting for 5 sec...",
-        "warning"
+        "error"
       );
       await new Promise((resolve) => setTimeout(resolve, 5000));
     }
@@ -406,8 +400,8 @@ class ariChain {
         data,
       }
     );
-    if (!response) {
-      logMessage(this.currentNum, this.total, "Failed checkin", "error");
+    if (response.data.status === "fail") {
+      logMessage(this.currentNum, this.total, response.data.msg, "error");
       return null;
     }
     return response.data;
@@ -482,7 +476,7 @@ class ariChain {
       return null;
     }
 
-    logMessage(this.currentNum, this.total, "Register succes.", "success");
+    logMessage(this.currentNum, this.total, "Register succesfully.", "success");
 
     return response.data;
   }
