@@ -66,7 +66,7 @@ async function main() {
           accountAri.write(`Master Key : ${account.result.master_key}\n`);
           accountAri.write(`Invite Code : ${account.result.invite_code}\n`);
           accountAri.write(`Reff To: ${refCode}\n`);
-          accountsbot.write(`${email}:${account.result.address}\n`);
+          accountsbot.write(`${email}:${password}\n`);
           accountAri.write("-".repeat(85) + "\n");
 
           successful++;
