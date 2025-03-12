@@ -4,6 +4,8 @@ accountsBot.txt
 node_modules/
 src/json/token.json
 src/json/client_secret.json
+src/json/config.json.example
+src/json/config.json
 proxy.txt
 config.json
 accountsbot.txt
